@@ -3,21 +3,30 @@ library(CDMConnector)
 library(CodelistGenerator)
 library(dplyr)
 library(here)
+library(dotenv)
 
-server_dbi<-"cdm_gold_202207"
-user<-Sys.getenv("DB_USER")
-password<- Sys.getenv("DB_PASSWORD")
-port<-Sys.getenv("DB_PORT")
-host<-Sys.getenv("DB_HOST")
-db <- dbConnect(RPostgres::Postgres(),
-                dbname = server_dbi,
-                port = port,
-                host = host,
-                user = user,
-                password = password)
-cdm <- cdmFromCon(con = db,
-                  cdmSchema = "public",
-                  writeSchema = "results")
+# Load environment variabales from root directory
+dotenv::load_dot_env(here("../../.env"))
+
+dsn <- Sys.getenv("ODBC_DSN")
+database_name <-  Sys.getenv("DATABASE_NAME")
+cdm_schema <- Sys.getenv("CDM_SCHEMA")
+cdm_version <- Sys.getenv("CDM_VERSION")
+cdm_name <- Sys.getenv("CDM_NAME")
+
+
+# database connection ----
+# see https://darwin-eu.github.io/CDMConnector/articles/a04_DBI_connection_examples.html
+# for examples on how to connect and create your cdm reference
+
+db <- dbConnect(odbc::odbc(), dsn, Database = database_name,  timeout = 10)
+
+cdm <- CDMConnector::cdm_from_con(db,
+                                  cdm_schema=cdm_schema,
+                                  cdm_name=cdm_name,
+                                  cdm_version=cdm_version)
+
+
 
 drug_names <- data.frame(concept_name = c("ciprofloxacin",
                 "delafloxacin",
