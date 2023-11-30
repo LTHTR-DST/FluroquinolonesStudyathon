@@ -481,6 +481,8 @@ server <- function(input, output, session) {
       )
     }
   )
+
+  
   ### plot ----
   output$prevalence_estimates_plot <- renderPlotly({
     plotprevalence()
@@ -507,7 +509,16 @@ server <- function(input, output, session) {
   
   output$gt_patient_characteristics  <- render_gt({
     PatientProfiles::gtCharacteristics(get_patient_characteristics())
-  })   
+  })
+  output$download_gt_patient_characteristics <- downloadHandler(
+    filename = function() {
+      "chracteristics.docx"
+    },
+    content = function(file) {
+      PatientProfiles::gtCharacteristics(get_patient_characteristics()) %>%
+        gtsave(file)
+    }
+  )
   
   
   
@@ -559,7 +570,15 @@ server <- function(input, output, session) {
   output$dt_large_scale_characteristics  <- DT::renderDataTable({
     table_data <- get_large_scale_characteristics()
     datatable(table_data, rownames= FALSE) 
-  })   
+  })
+  output$download_dt_large_scale_characteristics <- downloadHandler(
+    filename = function() {
+      "lsc.csv"
+    },
+    content = function(file) {
+      write.csv(get_large_scale_characteristics(), file, row.names = FALSE)
+    }
+  )
   
   
   
@@ -588,13 +607,26 @@ server <- function(input, output, session) {
              strata_name %in%  input$indication_pediatric_strata_name,
              strata_level %in%  input$indication_pediatric_strata_level) 
       
-    indication_pediatric
+    indication_pediatric %>% 
+      pivot_wider(names_from = estimate_type, 
+                  values_from = estimate) %>% 
+      mutate(percentage = round(as.numeric(percentage), 2)) %>% 
+      mutate(count_percentage = paste0(count, " (", percentage, "%)"))
   })
   
   output$dt_indication_pediatric  <- DT::renderDataTable({
     table_data <- get_indication_pediatric()
     datatable(table_data, rownames= FALSE) 
-  })   
+  })
+  
+  output$download_dt_indication_pediatric <- downloadHandler(
+    filename = function() {
+      "indication_pediatric.csv"
+    },
+    content = function(file) {
+      write.csv(get_indication_pediatric(), file, row.names = FALSE)
+    }
+  )
   
   
   
@@ -624,7 +656,11 @@ server <- function(input, output, session) {
              strata_name %in%  input$indication_adult_strata_name,
              strata_level %in%  input$indication_adult_strata_level) 
     
-    indication_adult
+    indication_adult %>% 
+      pivot_wider(names_from = estimate_type, 
+                  values_from = estimate) %>% 
+      mutate(percentage = round(as.numeric(percentage), 2)) %>% 
+      mutate(count_percentage = paste0(count, " (", percentage, "%)"))
   })
   
   output$dt_indication_adult  <- DT::renderDataTable({
@@ -632,7 +668,14 @@ server <- function(input, output, session) {
     datatable(table_data, rownames= FALSE) 
   })   
   
-  
+  output$download_dt_indication_adult <- downloadHandler(
+    filename = function() {
+      "indication_adult.csv"
+    },
+    content = function(file) {
+      write.csv(get_indication_adult(), file, row.names = FALSE)
+    }
+  )
   
   
   
@@ -662,19 +705,46 @@ server <- function(input, output, session) {
     table_data <- get_dus() %>% 
       filter(variable == "duration")
     datatable(table_data, rownames= FALSE) 
-  })  
+  })
+  output$download_dt_dus_duration <- downloadHandler(
+    filename = function() {
+      "dus_duration.csv"
+    },
+    content = function(file) {
+      write.csv(get_dus() %>% 
+                  filter(variable == "duration"), file, row.names = FALSE)
+    }
+  )
   
   output$dt_dus_initial_dd  <- DT::renderDataTable({
     table_data <- get_dus() %>% 
       filter(variable == "initial_daily_dose_milligram")
     datatable(table_data, rownames= FALSE) 
   })
+  output$download_dt_dus_initial_dd <- downloadHandler(
+    filename = function() {
+      "dus_initial_dd.csv"
+    },
+    content = function(file) {
+      write.csv(get_dus() %>% 
+                  filter(variable == "initial_daily_dose_milligram"), file, row.names = FALSE)
+    }
+  )
   
   output$dt_dus_cumulative_dose  <- DT::renderDataTable({
     table_data <- get_dus() %>% 
       filter(variable == "cumulative_dose_milligram")
     datatable(table_data, rownames= FALSE) 
   })
+  output$download_dt_dus_cumulative_dose <- downloadHandler(
+    filename = function() {
+      "dus_cumulative_dose.csv"
+    },
+    content = function(file) {
+      write.csv(get_dus() %>% 
+                  filter(variable == "cumulative_dose_milligram"), file, row.names = FALSE)
+    }
+  )
   
   
   

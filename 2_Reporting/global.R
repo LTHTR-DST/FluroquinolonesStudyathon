@@ -82,7 +82,13 @@ cohort_count_files<-results[stringr::str_detect(results, "cohort_count")]
 cohort_count <- list()
 for(i in seq_along(cohort_count_files)){
   cohort_count[[i]]<-readr::read_csv(cohort_count_files[[i]], 
-                                 show_col_types = FALSE) 
+                                 show_col_types = FALSE) %>%
+    mutate(number_records = if_else(number_records <5 & number_records >0,
+                                    as.character("<5"),
+                                    as.character(number_records))) %>%
+    mutate(number_subjects = if_else(number_subjects <5 & number_subjects >0,
+                                     as.character("<5"),
+                                     as.character(number_subjects)))
 }
 cohort_count <- dplyr::bind_rows(cohort_count)
 
@@ -117,6 +123,9 @@ for(i in seq_along(conceptSummary_files)){
                                     show_col_types = FALSE) 
   if(nrow(conceptSummary[[i]])==0){
     conceptSummary[[i]]<- NULL 
+  } else {
+    conceptSummary[[i]]<-conceptSummary[[i]] %>% 
+      mutate(concept_code = as.character(concept_code))
   }
 }
 conceptSummary <- dplyr::bind_rows(conceptSummary) 
@@ -239,7 +248,7 @@ prevalence_attrition <- dplyr::bind_rows(prevalence_attrition) %>%
   mutate(denominator_target_cohort_name = if_else(is.na(denominator_target_cohort_name),
                                                   "General population",
                                                   denominator_target_cohort_name))
-# incidence  ------
+# incidence ------
 incidence_files<-results[stringr::str_detect(results, ".csv")]
 incidence_files<-incidence_files[stringr::str_detect(incidence_files, "incidence")]
 incidence_files<-incidence_files[stringr::str_detect(incidence_files, "attrition", negate = TRUE)]
@@ -275,7 +284,8 @@ patient_characteristics_files<-results[stringr::str_detect(results, "dus_chars")
 patient_characteristics <- list()
 for(i in seq_along(patient_characteristics_files)){
   patient_characteristics[[i]]<-readr::read_csv(patient_characteristics_files[[i]], 
-                                                show_col_types = FALSE) 
+                                                show_col_types = FALSE) %>% 
+    mutate(estimate = as.character(estimate))
 }
 patient_characteristics <- dplyr::bind_rows(patient_characteristics)
 
@@ -320,9 +330,14 @@ dus_summary_files<-results[stringr::str_detect(results, ".csv")]
 dus_summary_files<-results[stringr::str_detect(results, "dus_summary")]
 dus_summary <- list()
 for(i in seq_along(dus_summary_files)){
+  print(i)
   dus_summary[[i]]<-readr::read_csv(dus_summary_files[[i]], 
-                                                    show_col_types = FALSE) %>% 
-    mutate(estimate = as.character(estimate))
+                                                    show_col_types = FALSE)
+  if(nrow(dus_summary[[i]]>0)){
+    dus_summary[[i]] <- dus_summary[[i]] %>% 
+      mutate(estimate = as.character(estimate))   
+  }
+
 }
 dus_summary <- dplyr::bind_rows(dus_summary)
 
